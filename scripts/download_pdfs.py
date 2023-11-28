@@ -1,3 +1,9 @@
+"""
+This script is designed to download PDFs from the arXiv website based on a list of identifiers
+stored in a SQLite database. It updates the database with the download status of each PDF.
+The script uses multithreading for efficient downloading and logs the process to a file and console.
+"""
+
 import os
 import requests
 import sqlite3
@@ -12,8 +18,14 @@ logging.basicConfig(
 )
 
 
-# Function to download the PDF
 def download_pdf(identifier):
+    """
+    Downloads a PDF from the arXiv website for a given identifier.
+
+    :param identifier: The arXiv identifier of the paper to be downloaded.
+    :return: A tuple containing the identifier and a boolean indicating
+             the success or failure of the download.
+    """
     pdf_url = f"http://arxiv.org/pdf/{identifier}.pdf"
     try:
         response = requests.get(pdf_url, stream=True)
@@ -23,7 +35,7 @@ def download_pdf(identifier):
 
             with open(pdf_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:  # filter out keep-alive new chunks
+                    if chunk:
                         f.write(chunk)
 
             logging.info(f"Successfully downloaded {identifier}")
@@ -40,8 +52,14 @@ def download_pdf(identifier):
         return identifier, False
 
 
-# Function to update the database with the download status
 def update_db(conn, identifier, status):
+    """
+    Updates the SQLite database with the download status of a paper.
+
+    :param conn: The connection object to the SQLite database.
+    :param identifier: The arXiv identifier of the paper.
+    :param status: The download status (True for success, False for failure).
+    """
     try:
         with conn:
             conn.execute(
@@ -56,14 +74,17 @@ def update_db(conn, identifier, status):
         )
 
 
-# Main function that runs the downloading tasks
 def main():
+    """
+    Main function to orchestrate the downloading and updating of the database.
+    It retrieves paper identifiers from a SQLite database, downloads the corresponding
+    PDFs using a ThreadPoolExecutor, and updates the download status in the database.
+    """
     # Establish a connection to the local SQL database
     conn = sqlite3.connect("arxiv_papers.db")
     c = conn.cursor()
 
     try:
-        # Create a new column in the database to track download status if it doesn't exist
         c.execute("ALTER TABLE articles ADD COLUMN downloaded INTEGER DEFAULT 0")
         conn.commit()
     except sqlite3.OperationalError as e:
@@ -73,20 +94,13 @@ def main():
     except Exception as e:
         logging.exception(f"An unexpected error occurred during DB setup. Error: {e}")
 
-    # Retrieve all identifiers from the database
     c.execute("SELECT identifier FROM articles WHERE downloaded = 0")
     identifiers = c.fetchall()
     logging.info(f"Found {len(identifiers)} records to download.")
 
-    # Initialize ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=10) as executor:
-        # Start the download operations and mark each future with its identifier
-        future_to_id = {
-            executor.submit(download_pdf, identifier[0]): identifier[0]
-            for identifier in identifiers
-        }
+        future_to_id = {executor.submit(download_pdf, identifier[0]): identifier[0] for identifier in identifiers}
 
-        # As each download completes, update the database
         for future in as_completed(future_to_id):
             identifier = future_to_id[future]
             try:
@@ -100,6 +114,5 @@ def main():
     conn.close()
 
 
-# This is the standard boilerplate that calls the main() function.
 if __name__ == "__main__":
     main()
