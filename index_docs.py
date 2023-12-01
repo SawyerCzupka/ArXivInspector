@@ -10,7 +10,9 @@ from typing import List
 
 # function to filter a large directory of arxiv files named YYMM.number.pdf by min and max year. returns
 # list of strings
-def filter_arxiv_files(directory: str, min_year: int = None, max_year: int = None) -> List[str]:
+def filter_arxiv_files(
+    directory: str, min_year: int = None, max_year: int = None
+) -> List[str]:
     """
     Filter a large directory of arxiv files named YYMM.number.pdf by min and max year
 
@@ -31,3 +33,17 @@ def filter_arxiv_files(directory: str, min_year: int = None, max_year: int = Non
 
     # return list of strings
     return files
+
+
+def import_file(file: str, directory: str, vector_store: QdrantVectorStore):
+    """
+    Import a single file into the vector store
+
+    :param file: file to import
+    :param directory: directory of file
+    :param vector_store: vector store to import into
+    :return: None
+    """
+
+    # get path of file
+    path = os.path.join(directory, file)
