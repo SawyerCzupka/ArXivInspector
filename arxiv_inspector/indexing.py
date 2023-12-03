@@ -65,6 +65,30 @@ class ArxivIndexer:
         """
         pass
 
+    def index_arxiv_by_year(self, directory: str, min_year: int = 2020, max_year: int = None):
+        """
+        Index all arxiv pdf files by year using the arxiv identifier. Format: YYMM.NNNNN
+
+        :param directory: directory to index
+        :param min_year: minimum year to index. YYYY format
+        :param max_year: maximum year to index. YYYY format
+        :return: None
+        """
+
+        file_names_in_dir = os.listdir(directory)
+        files_to_index = []
+
+        for file_name in file_names_in_dir:
+            file_year = int(file_name.split('.')[0][:2]) * 100
+            if file_year >= min_year:
+                if max_year is not None:
+                    if file_year <= max_year:
+                        files_to_index.append(file_name)
+                else:
+                    files_to_index.append(file_name)
+
+        self.index_arxiv_file_list(file_list=files_to_index, directory=directory)
+
 
 if __name__ == "__main__":
     pass
