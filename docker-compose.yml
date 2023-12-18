@@ -1,7 +1,7 @@
 # docker compose file to run qdrant
 # Recommended command: docker run -p 6333:6333 qdrant/qdrant
 
-version: '3'
+version: '3.8'
 
 services:
   qdrant:
@@ -9,7 +9,7 @@ services:
     ports:
       - "6333:6333"
     volumes:
-      - ./qdrant/storage:/qdrant/storage
+      - ./docker/qdrant/storage:/qdrant/storage
     restart: unless-stopped
 
   oobabooga:
@@ -37,6 +37,25 @@ services:
       options:
         max-file: "3"   # number of files or file count
         max-size: '10m'
+    deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                device_ids: ['0']
+                capabilities: [gpu]
+
+  text-embeddings-inference:
+    image: ghcr.io/huggingface/text-embeddings-inference:0.6
+    container_name: text-embeddings-inference
+    command:
+      - --model-id=jinaai/jina-embeddings-v2-base-en
+      - --max-batch-tokens=500
+      - --tokenization-workers=1
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/text-embeddings-inference/config:/config
     deploy:
         resources:
           reservations:
