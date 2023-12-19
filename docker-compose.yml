@@ -16,12 +16,12 @@ services:
     image: atinoda/text-generation-webui:latest # Specify variant as the :tag
     container_name: oobabooga
     environment:
-      - EXTRA_LAUNCH_ARGS="--listen --verbose" # Custom launch args (e.g., --model MODEL_NAME)
+      - EXTRA_LAUNCH_ARGS="--listen --verbose --api" # Custom launch args (e.g., --model MODEL_NAME)
 #      - BUILD_EXTENSIONS_LIVE="silero_tts whisper_stt" # Install named extensions during every container launch. THIS WILL SIGNIFICANLTLY SLOW LAUNCH TIME.
     ports:
       - "7860:7860"  # Default web port
       - "5000:5000"  # Default API port
-#      - "5005:5005"  # Default streaming port
+      - "5005:5005"  # Default streaming port
       - "5001:5001"  # Default OpenAI API extension port
     volumes:
       - ./config/characters:/app/characters
@@ -45,21 +45,21 @@ services:
                 device_ids: ['0']
                 capabilities: [gpu]
 
-  text-embeddings-inference:
-    image: ghcr.io/huggingface/text-embeddings-inference:0.6
-    container_name: text-embeddings-inference
-    command:
-      - --model-id=jinaai/jina-embeddings-v2-base-en
-      - --max-batch-tokens=500
-      - --tokenization-workers=1
-    ports:
-      - "8080:80"
-    volumes:
-      - ./docker/text-embeddings-inference/config:/config
-    deploy:
-        resources:
-          reservations:
-            devices:
-              - driver: nvidia
-                device_ids: ['0']
-                capabilities: [gpu]
+#  text-embeddings-inference:
+#    image: ghcr.io/huggingface/text-embeddings-inference:0.6
+#    container_name: text-embeddings-inference
+#    command:
+#      - --model-id=jinaai/jina-embeddings-v2-base-en
+#      - --max-batch-tokens=500
+#      - --tokenization-workers=1
+#    ports:
+#      - "8080:80"
+#    volumes:
+#      - ./docker/text-embeddings-inference/config:/config
+#    deploy:
+#        resources:
+#          reservations:
+#            devices:
+#              - driver: nvidia
+#                device_ids: ['0']
+#                capabilities: [gpu]
